@@ -1,0 +1,13 @@
+[workspace]
+members = [
+	"eip-2539",
+]
+
+[workspace.package]
+authors    = ["Echo <hujw77@gmail.com>"]
+edition    = "2021"
+license    = "MIT"
+repository = "https://github.com/hujw77/eip-test-gen"
+version    = "1.0.0"
+
+[workspace.dependencies]
