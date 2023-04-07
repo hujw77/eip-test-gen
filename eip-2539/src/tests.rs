@@ -88,7 +88,7 @@ fn gen_g1_add_vectors() {
 
         vectors.push(vector);
     }
-    write_vectors(vectors, "_g1_add");
+    write_vectors(vectors, "G1Add");
 }
 
 #[test]
