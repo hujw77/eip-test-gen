@@ -517,7 +517,7 @@ fn gen_fail_g1_mul_vectors() {
         let input: String = hex::encode(input_bytes.clone());
         let vector = VectorFail {
             input,
-            expected_error: String::from("must be less than modulus"),
+            expected_error: String::from("invliad Fq"),
             name: format!("large_field_element"),
         };
         vectors.push(vector);
@@ -543,6 +543,84 @@ fn gen_fail_g1_mul_vectors() {
     write_vectors_fail(vectors, "G1Mul_Fail");
 }
 
+fn gen_fail_g1_multiexp_vectors() {
+    let mut rng = test_rng();
+    let input_len = 3 * (2 * WORD_SIZE + SCALAR_SIZE);
+    let pad_zeros: Vec<u8> = vec![0u8; WORD_SIZE - FE_SIZE];
+    let mut vectors: Vec<VectorFail> = gen_fail_vectors(input_len);
+
+    // large modulus
+    {
+        let a = G1::rand(&mut rng);
+        let b = G1::rand(&mut rng);
+        let e1 = Fr::rand(&mut rng);
+        let e2 = Fr::rand(&mut rng);
+
+        let mut input_bytes: Vec<u8> = vec![];
+
+        let a_bytes = encode_g1(a.into_affine());
+        let e1_bytes = encode_fr(e1);
+        input_bytes.extend(a_bytes);
+        input_bytes.extend(e1_bytes);
+
+        let b_bytes = encode_g1(b.into_affine());
+        let e2_bytes = encode_fr(e2);
+        input_bytes.extend(b_bytes);
+        input_bytes.extend(e2_bytes);
+
+        input_bytes.extend(pad_zeros.clone());
+        input_bytes.extend(number_larger_than_modulus());
+        // y
+        input_bytes.extend(vec![0u8; WORD_SIZE]);
+        // e
+        input_bytes.extend(vec![0u8; SCALAR_SIZE]);
+
+        let input: String = hex::encode(input_bytes.clone());
+        let vector = VectorFail {
+            input,
+            expected_error: String::from("invliad Fq"),
+            name: format!("large_field_element"),
+        };
+        vectors.push(vector);
+    }
+
+    // not on curve
+    {
+        let a = G1::rand(&mut rng);
+        let b = G1::rand(&mut rng);
+        let c = rand_g1_point_not_on_curve();
+        let e1 = Fr::rand(&mut rng);
+        let e2 = Fr::rand(&mut rng);
+        let e3 = Fr::rand(&mut rng);
+
+        let mut input_bytes: Vec<u8> = vec![];
+
+        let a_bytes = encode_g1(a.into_affine());
+        let e1_bytes = encode_fr(e1);
+        input_bytes.extend(a_bytes);
+        input_bytes.extend(e1_bytes);
+
+        let b_bytes = encode_g1(b.into_affine());
+        let e2_bytes = encode_fr(e2);
+        input_bytes.extend(b_bytes);
+        input_bytes.extend(e2_bytes);
+
+        let c_bytes = encode_g1(c.into_affine());
+        let e3_bytes = encode_fr(e3);
+        input_bytes.extend(c_bytes);
+        input_bytes.extend(e3_bytes);
+
+        let input: String = hex::encode(input_bytes.clone());
+        let vector = VectorFail {
+            input,
+            expected_error: String::from("point is not on curve"),
+            name: format!("point_not_on_curve"),
+        };
+        vectors.push(vector);
+    }
+    write_vectors_fail(vectors, "G1MultiExp_Fail");
+}
+
 // #[test]
 // fn generate_test_vectors() {
 //     gen_g1_add_vectors();
@@ -557,8 +635,8 @@ fn gen_fail_g1_mul_vectors() {
 #[test]
 fn generate_fail_test_vectors() {
     // gen_fail_g1_add_vectors();
-    gen_fail_g1_mul_vectors();
-    // gen_fail_g1_multiexp_vectors();
+    // gen_fail_g1_mul_vectors();
+    gen_fail_g1_multiexp_vectors();
     // gen_fail_g2_add_vectors();
     // gen_fail_g2_mul_vectors();
     // gen_fail_g2_multiexp_vectors();
