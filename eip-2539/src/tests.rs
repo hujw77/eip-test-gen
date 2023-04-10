@@ -11,6 +11,7 @@ use std::io::prelude::*;
 
 const NUM_TESTS: usize = 100;
 const PREFIX: &str = "bls12377";
+const FAIL_PREFIX: &str = "fail-bls12377";
 const FE_SIZE: usize = 48;
 const SCALAR_SIZE: usize = 32;
 const WORD_SIZE: usize = 64;
@@ -38,7 +39,8 @@ fn write_vectors(vectors: Vec<VectorSuccess>, name: &str) {
 
 fn write_vectors_fail(vectors: Vec<VectorFail>, name: &str) {
     let serialized: String = serde_json::to_string(&vectors).unwrap();
-    let mut file = File::create(PREFIX.to_string() + name + ".json").expect("must create the file");
+    let mut file =
+        File::create(FAIL_PREFIX.to_string() + name + ".json").expect("must create the file");
     file.write(serialized.as_bytes())
         .expect("must write vectors");
 }
@@ -543,7 +545,7 @@ fn gen_fail_g1_add_vectors() {
         };
         vectors.push(vector);
     }
-    write_vectors_fail(vectors, "G1Add_Fail");
+    write_vectors_fail(vectors, "G1Add");
 }
 
 fn gen_fail_g1_mul_vectors() {
@@ -588,7 +590,7 @@ fn gen_fail_g1_mul_vectors() {
         };
         vectors.push(vector);
     }
-    write_vectors_fail(vectors, "G1Mul_Fail");
+    write_vectors_fail(vectors, "G1Mul");
 }
 
 fn gen_fail_g1_multiexp_vectors() {
@@ -666,7 +668,7 @@ fn gen_fail_g1_multiexp_vectors() {
         };
         vectors.push(vector);
     }
-    write_vectors_fail(vectors, "G1MultiExp_Fail");
+    write_vectors_fail(vectors, "G1MultiExp");
 }
 
 fn gen_fail_g2_add_vectors() {
@@ -719,7 +721,7 @@ fn gen_fail_g2_add_vectors() {
         };
         vectors.push(vector);
     }
-    write_vectors_fail(vectors, "G2Add_Fail");
+    write_vectors_fail(vectors, "G2Add");
 }
 fn gen_fail_g2_mul_vectors() {
     let input_len = 2 * 2 * WORD_SIZE + SCALAR_SIZE;
@@ -847,7 +849,7 @@ fn gen_fail_g2_multiexp_vectors() {
         };
         vectors.push(vector);
     }
-    write_vectors_fail(vectors, "G2MultiExp_Fail");
+    write_vectors_fail(vectors, "G2MultiExp");
 }
 fn gen_fail_pairing() {
     let mut rng = test_rng();
@@ -1027,7 +1029,7 @@ fn gen_fail_pairing() {
         vectors.push(vector);
     }
 
-    write_vectors_fail(vectors, "Pairing_Fail");
+    write_vectors_fail(vectors, "Pairing");
 }
 
 #[test]
