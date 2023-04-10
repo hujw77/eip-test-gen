@@ -1,10 +1,10 @@
 use ark_bls12_377::{Fq, Fq2, Fr, G1Affine, G1Projective as G1, G2Affine, G2Projective as G2};
 use ark_ec::{CurveGroup, Group};
-use ark_ff::PrimeField;
+use ark_ff::{Field, MontFp, PrimeField};
 use ark_std::ops::{Mul, Neg};
 use ark_std::test_rng;
 use ark_std::UniformRand;
-use ark_std::Zero;
+use ark_std::{One, Zero};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::prelude::*;
@@ -111,6 +111,44 @@ fn rand_g2_point_not_on_curve() -> G2 {
     let p = G2Affine::new_unchecked(x, y);
     assert!(!p.is_on_curve());
     p.into()
+}
+
+fn rand_g1_point_not_on_correct_subgroup() -> G1 {
+    let mut rng = test_rng();
+
+    loop {
+        let x = Fq::rand(&mut rng);
+        let mut y: Fq = x * x;
+        y *= x;
+        y += Fq::one();
+        // y.sqrt().
+        if let Some(y) = y.sqrt() {
+            let p = G1Affine::new_unchecked(x, y);
+            assert!(p.is_on_curve());
+            assert!(!p.is_in_correct_subgroup_assuming_on_curve());
+            return p.into();
+        }
+    }
+}
+
+fn rand_g2_point_not_on_correct_subgroup() -> G2 {
+    let mut rng = test_rng();
+
+    loop {
+        let x = Fq2::rand(&mut rng);
+        let mut y: Fq2 = x * x;
+        y *= x;
+        y += Fq2::new(
+			Fq::zero(),
+			MontFp!("155198655607781456406391640216936120121836107652948796323930557600032281009004493664981332883744016074664192874906"),
+		);
+        if let Some(y) = y.sqrt() {
+            let p = G2Affine::new_unchecked(x, y);
+            assert!(p.is_on_curve());
+            assert!(!p.is_in_correct_subgroup_assuming_on_curve());
+            return p.into();
+        }
+    }
 }
 
 fn encode_fq(field: Fq) -> [u8; 64] {
@@ -809,6 +847,186 @@ fn gen_fail_g2_multiexp_vectors() {
     }
     write_vectors_fail(vectors, "G2MultiExp_Fail");
 }
+fn gen_fail_pairing() {
+    let mut rng = test_rng();
+    let input_len = 3 * 4 * WORD_SIZE;
+    let mut vectors: Vec<VectorFail> = gen_fail_vectors(input_len);
+    let pad_zeros: Vec<u8> = vec![0u8; WORD_SIZE - FE_SIZE];
+
+    // large modulus
+    {
+        let mut input_bytes: Vec<u8> = vec![];
+
+        let a1 = G1::rand(&mut rng);
+        let a2 = G2::rand(&mut rng);
+        let a1_bytes = encode_g1(a1.into_affine());
+        let a2_bytes = encode_g2(a2.into_affine());
+        input_bytes.extend(a1_bytes);
+        input_bytes.extend(a2_bytes);
+
+        let b1 = G1::rand(&mut rng);
+        let b2 = G2::rand(&mut rng);
+        let b1_bytes = encode_g1(b1.into_affine());
+        let b2_bytes = encode_g2(b2.into_affine());
+
+        input_bytes.extend(b1_bytes);
+        input_bytes.extend(b2_bytes);
+
+        // c1x
+        input_bytes.extend(pad_zeros.clone());
+        input_bytes.extend(number_larger_than_modulus());
+        // c1y
+        input_bytes.extend(vec![0u8; WORD_SIZE]);
+        // c2
+        input_bytes.extend(vec![0u8; 4 * WORD_SIZE]);
+
+        let input: String = hex::encode(input_bytes.clone());
+        let vector = VectorFail {
+            input,
+            expected_error: String::from("invalid Fq"),
+            name: format!("large_field_element"),
+        };
+        vectors.push(vector);
+    }
+
+    // not on curve g1
+    {
+        let mut input_bytes: Vec<u8> = vec![];
+
+        let a1 = G1::rand(&mut rng);
+        let a2 = G2::rand(&mut rng);
+        let a1_bytes = encode_g1(a1.into_affine());
+        let a2_bytes = encode_g2(a2.into_affine());
+        input_bytes.extend(a1_bytes);
+        input_bytes.extend(a2_bytes);
+
+        let b1 = G1::rand(&mut rng);
+        let b2 = G2::rand(&mut rng);
+        let b1_bytes = encode_g1(b1.into_affine());
+        let b2_bytes = encode_g2(b2.into_affine());
+        input_bytes.extend(b1_bytes);
+        input_bytes.extend(b2_bytes);
+
+        let c1: G1 = rand_g1_point_not_on_curve();
+        let c2 = G2::rand(&mut rng);
+        let c1_bytes = encode_g1(c1.into_affine());
+        let c2_bytes = encode_g2(c2.into_affine());
+        input_bytes.extend(c1_bytes);
+        input_bytes.extend(c2_bytes);
+
+        let input: String = hex::encode(input_bytes.clone());
+        let vector = VectorFail {
+            input,
+            expected_error: String::from("point is not on curve"),
+            name: format!("point_not_on_curve_g1"),
+        };
+        vectors.push(vector);
+    }
+
+    // not on curve g2
+    {
+        let mut input_bytes: Vec<u8> = vec![];
+
+        let a1 = G1::rand(&mut rng);
+        let a2 = G2::rand(&mut rng);
+        let a1_bytes = encode_g1(a1.into_affine());
+        let a2_bytes = encode_g2(a2.into_affine());
+        input_bytes.extend(a1_bytes);
+        input_bytes.extend(a2_bytes);
+
+        let b1 = G1::rand(&mut rng);
+        let b2 = G2::rand(&mut rng);
+        let b1_bytes = encode_g1(b1.into_affine());
+        let b2_bytes = encode_g2(b2.into_affine());
+        input_bytes.extend(b1_bytes);
+        input_bytes.extend(b2_bytes);
+
+        let c1 = G1::rand(&mut rng);
+        let c2: G2 = rand_g2_point_not_on_curve();
+        let c1_bytes = encode_g1(c1.into_affine());
+        let c2_bytes = encode_g2(c2.into_affine());
+        input_bytes.extend(c1_bytes);
+        input_bytes.extend(c2_bytes);
+
+        let input: String = hex::encode(input_bytes.clone());
+        let vector = VectorFail {
+            input,
+            expected_error: String::from("point is not on curve"),
+            name: format!("point_not_on_curve_g2"),
+        };
+        vectors.push(vector);
+    }
+
+    // incorrect subgroup g1
+    {
+        let mut input_bytes: Vec<u8> = vec![];
+
+        let a1 = G1::rand(&mut rng);
+        let a2 = G2::rand(&mut rng);
+        let a1_bytes = encode_g1(a1.into_affine());
+        let a2_bytes = encode_g2(a2.into_affine());
+        input_bytes.extend(a1_bytes);
+        input_bytes.extend(a2_bytes);
+
+        let b1 = G1::rand(&mut rng);
+        let b2 = G2::rand(&mut rng);
+        let b1_bytes = encode_g1(b1.into_affine());
+        let b2_bytes = encode_g2(b2.into_affine());
+        input_bytes.extend(b1_bytes);
+        input_bytes.extend(b2_bytes);
+
+        let c1: G1 = rand_g1_point_not_on_correct_subgroup();
+        let c2 = G2::rand(&mut rng);
+        let c1_bytes = encode_g1(c1.into_affine());
+        let c2_bytes = encode_g2(c2.into_affine());
+        input_bytes.extend(c1_bytes);
+        input_bytes.extend(c2_bytes);
+
+        let input: String = hex::encode(input_bytes.clone());
+        let vector = VectorFail {
+            input,
+            expected_error: String::from("g1 point is not on correct subgroup"),
+            name: format!("incorrect_subgroup_g1"),
+        };
+        vectors.push(vector);
+    }
+
+    // incorrect subgroup g2
+    {
+        let mut input_bytes: Vec<u8> = vec![];
+
+        let a1 = G1::rand(&mut rng);
+        let a2 = G2::rand(&mut rng);
+        let a1_bytes = encode_g1(a1.into_affine());
+        let a2_bytes = encode_g2(a2.into_affine());
+        input_bytes.extend(a1_bytes);
+        input_bytes.extend(a2_bytes);
+
+        let b1 = G1::rand(&mut rng);
+        let b2 = G2::rand(&mut rng);
+        let b1_bytes = encode_g1(b1.into_affine());
+        let b2_bytes = encode_g2(b2.into_affine());
+        input_bytes.extend(b1_bytes);
+        input_bytes.extend(b2_bytes);
+
+        let c1 = G1::rand(&mut rng);
+        let c2: G2 = rand_g2_point_not_on_correct_subgroup();
+        let c1_bytes = encode_g1(c1.into_affine());
+        let c2_bytes = encode_g2(c2.into_affine());
+        input_bytes.extend(c1_bytes);
+        input_bytes.extend(c2_bytes);
+
+        let input: String = hex::encode(input_bytes.clone());
+        let vector = VectorFail {
+            input,
+            expected_error: String::from("g2 point is not on correct subgroup"),
+            name: format!("incorrect_subgroup_g2"),
+        };
+        vectors.push(vector);
+    }
+
+    write_vectors_fail(vectors, "Pairing_Fail");
+}
 
 // #[test]
 // fn generate_test_vectors() {
@@ -828,6 +1046,6 @@ fn generate_fail_test_vectors() {
     // gen_fail_g1_multiexp_vectors();
     // gen_fail_g2_add_vectors();
     // gen_fail_g2_mul_vectors();
-    gen_fail_g2_multiexp_vectors();
-    // gen_fail_pairing();
+    // gen_fail_g2_multiexp_vectors();
+    gen_fail_pairing();
 }
