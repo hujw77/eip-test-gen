@@ -1,6 +1,7 @@
-use ark_bls12_377::{Fq, G1Affine, G1Projective as G1, G2Affine, G2Projective as G2};
+use ark_bls12_377::{Fq, Fr, G1Affine, G1Projective as G1, G2Affine, G2Projective as G2};
 use ark_ec::CurveGroup;
 use ark_ff::PrimeField;
+use ark_std::ops::Mul;
 use ark_std::test_rng;
 use ark_std::UniformRand;
 use serde::{Deserialize, Serialize};
@@ -55,6 +56,18 @@ fn encode_fq(field: Fq) -> [u8; 64] {
     result
 }
 
+fn encode_fr(r: Fr) -> [u8; 32] {
+    let mut result = [0u8; 32];
+    let rep = r.into_bigint();
+
+    result[0..8].copy_from_slice(&rep.0[3].to_be_bytes());
+    result[8..16].copy_from_slice(&rep.0[2].to_be_bytes());
+    result[16..24].copy_from_slice(&rep.0[1].to_be_bytes());
+    result[24..32].copy_from_slice(&rep.0[0].to_be_bytes());
+
+    result
+}
+
 fn encode_g1(g1: G1Affine) -> [u8; 128] {
     let mut result = [0u8; 128];
     let x_bytes = encode_fq(g1.x);
@@ -69,7 +82,7 @@ fn gen_g1_add_vectors() {
     let mut vectors: Vec<VectorSuccess> = vec![];
     for i in 0..NUM_TESTS {
         let mut input_bytes: Vec<u8> = vec![];
-        let mut a = G1::rand(&mut rng).into_affine();
+        let a = G1::rand(&mut rng).into_affine();
         let b = G1::rand(&mut rng).into_affine();
         let a_bytes = encode_g1(a);
         let b_bytes = encode_g1(b);
@@ -91,10 +104,38 @@ fn gen_g1_add_vectors() {
     write_vectors(vectors, "G1Add");
 }
 
+fn gen_g1_mul_vectors() {
+    let mut rng = test_rng();
+    let mut vectors: Vec<VectorSuccess> = vec![];
+    for i in 0..NUM_TESTS {
+        let mut input_bytes: Vec<u8> = vec![];
+
+        let a = G1::rand(&mut rng).into_affine();
+        let e = Fr::rand(&mut rng);
+        let a_bytes = encode_g1(a);
+        let e_bytes = encode_fr(e);
+
+        input_bytes.extend(a_bytes);
+        input_bytes.extend(e_bytes);
+        let input: String = hex::encode(input_bytes.clone());
+
+        let r = a.mul(e);
+        let result_bytes: Vec<u8> = encode_g1(r.into_affine()).to_vec();
+        let result: String = hex::encode(result_bytes);
+        let vector = VectorSuccess {
+            input,
+            expected: result,
+            name: format!("{}_{}", "g1_mul", i + 1),
+        };
+        vectors.push(vector);
+    }
+    write_vectors(vectors, "G1Mul");
+}
+
 #[test]
 fn generate_test_vectors() {
     gen_g1_add_vectors();
-    // gen_g1_mul_vectors();
+    gen_g1_mul_vectors();
     // gen_g1_multiexp_vectors();
     // gen_g2_add_vectors();
     // gen_g2_mul_vectors();
