@@ -681,6 +681,53 @@ fn gen_fail_g2_add_vectors() {
     }
     write_vectors_fail(vectors, "G2Add_Fail");
 }
+fn gen_fail_g2_mul_vectors() {
+    let input_len = 2 * 2 * WORD_SIZE + SCALAR_SIZE;
+    let pad_zeros: Vec<u8> = vec![0u8; WORD_SIZE - FE_SIZE];
+    let mut vectors: Vec<VectorFail> = gen_fail_vectors(input_len);
+
+    // large modulus
+    {
+        let mut input_bytes: Vec<u8> = vec![];
+
+        // x0
+        input_bytes.extend(pad_zeros.clone());
+        input_bytes.extend(number_larger_than_modulus());
+        // x1, y0, y1
+        input_bytes.extend(vec![0u8; WORD_SIZE]);
+        input_bytes.extend(vec![0u8; WORD_SIZE]);
+        input_bytes.extend(vec![0u8; WORD_SIZE]);
+        // e
+        input_bytes.extend(vec![0u8; SCALAR_SIZE]);
+
+        let input: String = hex::encode(input_bytes.clone());
+        let vector = VectorFail {
+            input,
+            expected_error: String::from("invalid Fq"),
+            name: format!("large_field_element"),
+        };
+        vectors.push(vector);
+    }
+
+    // not on curve
+    {
+        let a: G2 = rand_g2_point_not_on_curve();
+        let a_bytes = encode_g2(a.into_affine());
+
+        let mut input_bytes: Vec<u8> = vec![];
+        input_bytes.extend(a_bytes);
+        input_bytes.extend(vec![0u8; SCALAR_SIZE]);
+
+        let input: String = hex::encode(input_bytes.clone());
+        let vector = VectorFail {
+            input,
+            expected_error: String::from("point is not on curve"),
+            name: format!("point_not_on_curve"),
+        };
+        vectors.push(vector);
+    }
+    write_vectors_fail(vectors, "G2Mul_Fail");
+}
 
 // #[test]
 // fn generate_test_vectors() {
@@ -698,8 +745,8 @@ fn generate_fail_test_vectors() {
     // gen_fail_g1_add_vectors();
     // gen_fail_g1_mul_vectors();
     // gen_fail_g1_multiexp_vectors();
-    gen_fail_g2_add_vectors();
-    // gen_fail_g2_mul_vectors();
+    // gen_fail_g2_add_vectors();
+    gen_fail_g2_mul_vectors();
     // gen_fail_g2_multiexp_vectors();
     // gen_fail_pairing();
 }
