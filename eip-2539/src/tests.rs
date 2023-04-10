@@ -232,14 +232,46 @@ fn gen_g2_mul_vectors() {
     write_vectors(vectors, "G2Mul");
 }
 
+fn gen_g2_multiexp_vectors() {
+    let mut rng = test_rng();
+    let mut vectors: Vec<VectorSuccess> = vec![];
+    let mul_pair_size: usize = NUM_TESTS;
+    for i in 1..mul_pair_size + 1 {
+        let mut input_bytes: Vec<u8> = vec![];
+        let mut acc = G2::zero();
+        for _ in 0..i {
+            let a = G2::rand(&mut rng).into_affine();
+            let e = Fr::rand(&mut rng);
+            let a_bytes = encode_g2(a);
+            let e_bytes = encode_fr(e);
+
+            input_bytes.extend(a_bytes);
+            input_bytes.extend(e_bytes);
+
+            acc += a.mul(e);
+        }
+        let input: String = hex::encode(input_bytes.clone());
+
+        let result_bytes: Vec<u8> = encode_g2(acc.into_affine()).to_vec();
+        let result: String = hex::encode(result_bytes);
+        let vector = VectorSuccess {
+            input,
+            expected: result,
+            name: format!("{}_{}", "g1_multiexp", i + 1),
+        };
+        vectors.push(vector);
+    }
+    write_vectors(vectors, "G2MultiExp");
+}
+
 #[test]
 fn generate_test_vectors() {
     // gen_g1_add_vectors();
     // gen_g1_mul_vectors();
     // gen_g1_multiexp_vectors();
     // gen_g2_add_vectors();
-    gen_g2_mul_vectors();
-    // gen_g2_multiexp_vectors();
+    // gen_g2_mul_vectors();
+    gen_g2_multiexp_vectors();
     // gen_pairing_vectors();
 }
 
