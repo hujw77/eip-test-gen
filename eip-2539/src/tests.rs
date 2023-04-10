@@ -461,7 +461,7 @@ fn gen_pairing_vectors() {
                 let vector = VectorSuccess {
                     input,
                     expected: result,
-                    name: format!("{}_{}", "pairing", i + 2),
+                    name: format!("{}_{}", "g2_pairing", i + 2),
                 };
                 vectors.push(vector);
             }
@@ -490,7 +490,7 @@ fn gen_pairing_vectors() {
             let vector = VectorSuccess {
                 input,
                 expected: result,
-                name: format!("{}_{}", "pairing", NUM_TESTS + i + 2),
+                name: format!("{}_{}", "g2_pairing_0", NUM_TESTS + i + 2),
             };
             vectors.push(vector);
         }
