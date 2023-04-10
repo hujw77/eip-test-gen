@@ -177,24 +177,26 @@ fn encode_fr(r: Fr) -> [u8; 32] {
     result
 }
 
-fn encode_g1(g1: G1Affine) -> [u8; 128] {
+fn encode_g1(g1: G1) -> [u8; 128] {
+    let g = g1.into_affine();
     let mut result = [0u8; 128];
-    let x_bytes = encode_fq(g1.x);
+    let x_bytes = encode_fq(g.x);
     result[0..64].copy_from_slice(&x_bytes[..]);
-    let y_bytes = encode_fq(g1.y);
+    let y_bytes = encode_fq(g.y);
     result[64..128].copy_from_slice(&y_bytes[..]);
     result
 }
 
-fn encode_g2(g2: G2Affine) -> [u8; 256] {
+fn encode_g2(g2: G2) -> [u8; 256] {
+    let g = g2.into_affine();
     let mut result = [0u8; 256];
-    let x0_bytes = encode_fq(g2.x.c0);
+    let x0_bytes = encode_fq(g.x.c0);
     result[0..64].copy_from_slice(&x0_bytes[..]);
-    let x1_bytes = encode_fq(g2.x.c1);
+    let x1_bytes = encode_fq(g.x.c1);
     result[64..128].copy_from_slice(&x1_bytes[..]);
-    let y0_bytes = encode_fq(g2.y.c0);
+    let y0_bytes = encode_fq(g.y.c0);
     result[128..192].copy_from_slice(&y0_bytes[..]);
-    let y1_bytes = encode_fq(g2.y.c1);
+    let y1_bytes = encode_fq(g.y.c1);
     result[192..256].copy_from_slice(&y1_bytes[..]);
     result
 }
@@ -204,8 +206,8 @@ fn gen_g1_add_vectors() {
     let mut vectors: Vec<VectorSuccess> = vec![];
     for i in 0..NUM_TESTS {
         let mut input_bytes: Vec<u8> = vec![];
-        let a = G1::rand(&mut rng).into_affine();
-        let b = G1::rand(&mut rng).into_affine();
+        let a = G1::rand(&mut rng);
+        let b = G1::rand(&mut rng);
         let a_bytes = encode_g1(a);
         let b_bytes = encode_g1(b);
         input_bytes.extend(a_bytes);
@@ -213,7 +215,7 @@ fn gen_g1_add_vectors() {
         let input: String = hex::encode(input_bytes.clone());
 
         let r = a + b;
-        let result_bytes: Vec<u8> = encode_g1(r.into_affine()).to_vec();
+        let result_bytes: Vec<u8> = encode_g1(r).to_vec();
         let result: String = hex::encode(result_bytes);
         let vector = VectorSuccess {
             input,
@@ -232,7 +234,7 @@ fn gen_g1_mul_vectors() {
     for i in 0..NUM_TESTS {
         let mut input_bytes: Vec<u8> = vec![];
 
-        let a = G1::rand(&mut rng).into_affine();
+        let a = G1::rand(&mut rng);
         let e = Fr::rand(&mut rng);
         let a_bytes = encode_g1(a);
         let e_bytes = encode_fr(e);
@@ -242,7 +244,7 @@ fn gen_g1_mul_vectors() {
         let input: String = hex::encode(input_bytes.clone());
 
         let r = a.mul(e);
-        let result_bytes: Vec<u8> = encode_g1(r.into_affine()).to_vec();
+        let result_bytes: Vec<u8> = encode_g1(r).to_vec();
         let result: String = hex::encode(result_bytes);
         let vector = VectorSuccess {
             input,
@@ -262,7 +264,7 @@ fn gen_g1_multiexp_vectors() {
         let mut input_bytes: Vec<u8> = vec![];
         let mut acc = G1::zero();
         for _ in 0..i {
-            let a = G1::rand(&mut rng).into_affine();
+            let a = G1::rand(&mut rng);
             let e = Fr::rand(&mut rng);
             let a_bytes = encode_g1(a);
             let e_bytes = encode_fr(e);
@@ -274,7 +276,7 @@ fn gen_g1_multiexp_vectors() {
         }
         let input: String = hex::encode(input_bytes.clone());
 
-        let result_bytes: Vec<u8> = encode_g1(acc.into_affine()).to_vec();
+        let result_bytes: Vec<u8> = encode_g1(acc).to_vec();
         let result: String = hex::encode(result_bytes);
         let vector = VectorSuccess {
             input,
@@ -291,8 +293,8 @@ fn gen_g2_add_vectors() {
     let mut vectors: Vec<VectorSuccess> = vec![];
     for i in 0..NUM_TESTS {
         let mut input_bytes: Vec<u8> = vec![];
-        let a = G2::rand(&mut rng).into_affine();
-        let b = G2::rand(&mut rng).into_affine();
+        let a = G2::rand(&mut rng);
+        let b = G2::rand(&mut rng);
         let a_bytes: Vec<u8> = encode_g2(a).to_vec();
         let b_bytes: Vec<u8> = encode_g2(b).to_vec();
         input_bytes.extend(a_bytes);
@@ -300,7 +302,7 @@ fn gen_g2_add_vectors() {
         let input: String = hex::encode(input_bytes.clone());
 
         let r = a + b;
-        let result_bytes: Vec<u8> = encode_g2(r.into_affine()).to_vec();
+        let result_bytes: Vec<u8> = encode_g2(r).to_vec();
         let result: String = hex::encode(result_bytes);
         let vector = VectorSuccess {
             input,
@@ -318,7 +320,7 @@ fn gen_g2_mul_vectors() {
     for i in 0..NUM_TESTS {
         let mut input_bytes: Vec<u8> = vec![];
 
-        let a = G2::rand(&mut rng).into_affine();
+        let a = G2::rand(&mut rng);
         let e = Fr::rand(&mut rng);
         let a_bytes = encode_g2(a);
         let e_bytes = encode_fr(e);
@@ -328,7 +330,7 @@ fn gen_g2_mul_vectors() {
         let input: String = hex::encode(input_bytes.clone());
 
         let r = a.mul(e);
-        let result_bytes: Vec<u8> = encode_g2(r.into_affine()).to_vec();
+        let result_bytes: Vec<u8> = encode_g2(r).to_vec();
         let result: String = hex::encode(result_bytes);
         let vector = VectorSuccess {
             input,
@@ -348,7 +350,7 @@ fn gen_g2_multiexp_vectors() {
         let mut input_bytes: Vec<u8> = vec![];
         let mut acc = G2::zero();
         for _ in 0..i {
-            let a = G2::rand(&mut rng).into_affine();
+            let a = G2::rand(&mut rng);
             let e = Fr::rand(&mut rng);
             let a_bytes = encode_g2(a);
             let e_bytes = encode_fr(e);
@@ -360,7 +362,7 @@ fn gen_g2_multiexp_vectors() {
         }
         let input: String = hex::encode(input_bytes.clone());
 
-        let result_bytes: Vec<u8> = encode_g2(acc.into_affine()).to_vec();
+        let result_bytes: Vec<u8> = encode_g2(acc).to_vec();
         let result: String = hex::encode(result_bytes);
         let vector = VectorSuccess {
             input,
@@ -391,7 +393,7 @@ fn gen_pairing_vectors() {
             let mut input_bytes: Vec<u8> = vec![];
 
             let mut bytes_a1 = g1_inf_encoded.clone();
-            let mut bytes_a2 = encode_g2(g2.clone().into_affine()).to_vec();
+            let mut bytes_a2 = encode_g2(g2.clone()).to_vec();
             input_bytes.extend(bytes_a1);
             input_bytes.extend(bytes_a2);
 
@@ -405,7 +407,7 @@ fn gen_pairing_vectors() {
             vectors.push(vector);
 
             input_bytes.clear();
-            bytes_a1 = encode_g1(g1.clone().into_affine()).to_vec();
+            bytes_a1 = encode_g1(g1.clone()).to_vec();
             bytes_a2 = g2_inf_encoded.to_vec().clone();
             input_bytes.extend(bytes_a1);
             input_bytes.extend(bytes_a2);
@@ -432,8 +434,8 @@ fn gen_pairing_vectors() {
                     let e2 = Fr::rand(&mut rng);
                     let a1 = g1.mul(e1);
                     let a2 = g2.mul(e2);
-                    let bytes_a1 = encode_g1(a1.into_affine());
-                    let bytes_a2 = encode_g2(a2.into_affine());
+                    let bytes_a1 = encode_g1(a1);
+                    let bytes_a2 = encode_g2(a2);
                     input_bytes.extend(bytes_a1);
                     input_bytes.extend(bytes_a2);
                     // println!("e1\n{}", e1);
@@ -446,8 +448,8 @@ fn gen_pairing_vectors() {
                 let a1 = g1.mul(acc.neg());
                 // println!("nacc\n{}", acc.neg());
                 let a2 = g2;
-                let bytes_a1 = encode_g1(a1.into_affine());
-                let bytes_a2 = encode_g2(a2.into_affine());
+                let bytes_a1 = encode_g1(a1);
+                let bytes_a2 = encode_g2(a2);
                 input_bytes.extend(bytes_a1);
                 input_bytes.extend(bytes_a2);
 
@@ -474,8 +476,8 @@ fn gen_pairing_vectors() {
                 let e2 = Fr::rand(&mut rng);
                 let a1 = g1.mul(e1);
                 let a2 = g2.mul(e2);
-                let bytes_a1 = encode_g1(a1.into_affine());
-                let bytes_a2 = encode_g2(a2.into_affine());
+                let bytes_a1 = encode_g1(a1);
+                let bytes_a2 = encode_g2(a2);
                 input_bytes.extend(bytes_a1);
                 input_bytes.extend(bytes_a2);
             }
@@ -506,7 +508,7 @@ fn gen_fail_g1_add_vectors() {
         let a = G1::rand(&mut rng);
 
         let mut input_bytes: Vec<u8> = vec![];
-        let a_bytes = encode_g1(a.into_affine());
+        let a_bytes = encode_g1(a);
         input_bytes.extend(a_bytes);
         input_bytes.extend(pad_zeros.clone());
         input_bytes.extend(number_larger_than_modulus());
@@ -572,7 +574,7 @@ fn gen_fail_g1_mul_vectors() {
     // not on curve
     {
         let a: G1 = rand_g1_point_not_on_curve();
-        let a_bytes = encode_g1(a.into_affine());
+        let a_bytes = encode_g1(a);
 
         let mut input_bytes: Vec<u8> = vec![];
         input_bytes.extend(a_bytes);
@@ -604,12 +606,12 @@ fn gen_fail_g1_multiexp_vectors() {
 
         let mut input_bytes: Vec<u8> = vec![];
 
-        let a_bytes = encode_g1(a.into_affine());
+        let a_bytes = encode_g1(a);
         let e1_bytes = encode_fr(e1);
         input_bytes.extend(a_bytes);
         input_bytes.extend(e1_bytes);
 
-        let b_bytes = encode_g1(b.into_affine());
+        let b_bytes = encode_g1(b);
         let e2_bytes = encode_fr(e2);
         input_bytes.extend(b_bytes);
         input_bytes.extend(e2_bytes);
@@ -641,17 +643,17 @@ fn gen_fail_g1_multiexp_vectors() {
 
         let mut input_bytes: Vec<u8> = vec![];
 
-        let a_bytes = encode_g1(a.into_affine());
+        let a_bytes = encode_g1(a);
         let e1_bytes = encode_fr(e1);
         input_bytes.extend(a_bytes);
         input_bytes.extend(e1_bytes);
 
-        let b_bytes = encode_g1(b.into_affine());
+        let b_bytes = encode_g1(b);
         let e2_bytes = encode_fr(e2);
         input_bytes.extend(b_bytes);
         input_bytes.extend(e2_bytes);
 
-        let c_bytes = encode_g1(c.into_affine());
+        let c_bytes = encode_g1(c);
         let e3_bytes = encode_fr(e3);
         input_bytes.extend(c_bytes);
         input_bytes.extend(e3_bytes);
@@ -677,7 +679,7 @@ fn gen_fail_g2_add_vectors() {
     {
         let a = G2::rand(&mut rng);
         let mut input_bytes: Vec<u8> = vec![];
-        let a_bytes = encode_g2(a.into_affine());
+        let a_bytes = encode_g2(a);
         input_bytes.extend(a_bytes);
 
         // x0
@@ -702,8 +704,8 @@ fn gen_fail_g2_add_vectors() {
         let a = G2::rand(&mut rng);
         let b: G2 = rand_g2_point_not_on_curve();
 
-        let a_bytes = encode_g2(a.into_affine());
-        let e_bytes = encode_g2(b.into_affine());
+        let a_bytes = encode_g2(a);
+        let e_bytes = encode_g2(b);
 
         let mut input_bytes: Vec<u8> = vec![];
         input_bytes.extend(a_bytes);
@@ -750,7 +752,7 @@ fn gen_fail_g2_mul_vectors() {
     // not on curve
     {
         let a: G2 = rand_g2_point_not_on_curve();
-        let a_bytes = encode_g2(a.into_affine());
+        let a_bytes = encode_g2(a);
 
         let mut input_bytes: Vec<u8> = vec![];
         input_bytes.extend(a_bytes);
@@ -782,12 +784,12 @@ fn gen_fail_g2_multiexp_vectors() {
 
         let mut input_bytes: Vec<u8> = vec![];
 
-        let a_bytes = encode_g2(a.into_affine());
+        let a_bytes = encode_g2(a);
         let e1_bytes = encode_fr(e1);
         input_bytes.extend(a_bytes);
         input_bytes.extend(e1_bytes);
 
-        let b_bytes = encode_g2(b.into_affine());
+        let b_bytes = encode_g2(b);
         let e2_bytes = encode_fr(e2);
         input_bytes.extend(b_bytes);
         input_bytes.extend(e2_bytes);
@@ -822,17 +824,17 @@ fn gen_fail_g2_multiexp_vectors() {
 
         let mut input_bytes: Vec<u8> = vec![];
 
-        let a_bytes = encode_g2(a.into_affine());
+        let a_bytes = encode_g2(a);
         let e1_bytes = encode_fr(e1);
         input_bytes.extend(a_bytes);
         input_bytes.extend(e1_bytes);
 
-        let b_bytes = encode_g2(b.into_affine());
+        let b_bytes = encode_g2(b);
         let e2_bytes = encode_fr(e2);
         input_bytes.extend(b_bytes);
         input_bytes.extend(e2_bytes);
 
-        let c_bytes = encode_g2(c.into_affine());
+        let c_bytes = encode_g2(c);
         let e3_bytes = encode_fr(e3);
         input_bytes.extend(c_bytes);
         input_bytes.extend(e3_bytes);
@@ -859,15 +861,15 @@ fn gen_fail_pairing() {
 
         let a1 = G1::rand(&mut rng);
         let a2 = G2::rand(&mut rng);
-        let a1_bytes = encode_g1(a1.into_affine());
-        let a2_bytes = encode_g2(a2.into_affine());
+        let a1_bytes = encode_g1(a1);
+        let a2_bytes = encode_g2(a2);
         input_bytes.extend(a1_bytes);
         input_bytes.extend(a2_bytes);
 
         let b1 = G1::rand(&mut rng);
         let b2 = G2::rand(&mut rng);
-        let b1_bytes = encode_g1(b1.into_affine());
-        let b2_bytes = encode_g2(b2.into_affine());
+        let b1_bytes = encode_g1(b1);
+        let b2_bytes = encode_g2(b2);
 
         input_bytes.extend(b1_bytes);
         input_bytes.extend(b2_bytes);
@@ -895,22 +897,22 @@ fn gen_fail_pairing() {
 
         let a1 = G1::rand(&mut rng);
         let a2 = G2::rand(&mut rng);
-        let a1_bytes = encode_g1(a1.into_affine());
-        let a2_bytes = encode_g2(a2.into_affine());
+        let a1_bytes = encode_g1(a1);
+        let a2_bytes = encode_g2(a2);
         input_bytes.extend(a1_bytes);
         input_bytes.extend(a2_bytes);
 
         let b1 = G1::rand(&mut rng);
         let b2 = G2::rand(&mut rng);
-        let b1_bytes = encode_g1(b1.into_affine());
-        let b2_bytes = encode_g2(b2.into_affine());
+        let b1_bytes = encode_g1(b1);
+        let b2_bytes = encode_g2(b2);
         input_bytes.extend(b1_bytes);
         input_bytes.extend(b2_bytes);
 
         let c1: G1 = rand_g1_point_not_on_curve();
         let c2 = G2::rand(&mut rng);
-        let c1_bytes = encode_g1(c1.into_affine());
-        let c2_bytes = encode_g2(c2.into_affine());
+        let c1_bytes = encode_g1(c1);
+        let c2_bytes = encode_g2(c2);
         input_bytes.extend(c1_bytes);
         input_bytes.extend(c2_bytes);
 
@@ -929,22 +931,22 @@ fn gen_fail_pairing() {
 
         let a1 = G1::rand(&mut rng);
         let a2 = G2::rand(&mut rng);
-        let a1_bytes = encode_g1(a1.into_affine());
-        let a2_bytes = encode_g2(a2.into_affine());
+        let a1_bytes = encode_g1(a1);
+        let a2_bytes = encode_g2(a2);
         input_bytes.extend(a1_bytes);
         input_bytes.extend(a2_bytes);
 
         let b1 = G1::rand(&mut rng);
         let b2 = G2::rand(&mut rng);
-        let b1_bytes = encode_g1(b1.into_affine());
-        let b2_bytes = encode_g2(b2.into_affine());
+        let b1_bytes = encode_g1(b1);
+        let b2_bytes = encode_g2(b2);
         input_bytes.extend(b1_bytes);
         input_bytes.extend(b2_bytes);
 
         let c1 = G1::rand(&mut rng);
         let c2: G2 = rand_g2_point_not_on_curve();
-        let c1_bytes = encode_g1(c1.into_affine());
-        let c2_bytes = encode_g2(c2.into_affine());
+        let c1_bytes = encode_g1(c1);
+        let c2_bytes = encode_g2(c2);
         input_bytes.extend(c1_bytes);
         input_bytes.extend(c2_bytes);
 
@@ -963,22 +965,22 @@ fn gen_fail_pairing() {
 
         let a1 = G1::rand(&mut rng);
         let a2 = G2::rand(&mut rng);
-        let a1_bytes = encode_g1(a1.into_affine());
-        let a2_bytes = encode_g2(a2.into_affine());
+        let a1_bytes = encode_g1(a1);
+        let a2_bytes = encode_g2(a2);
         input_bytes.extend(a1_bytes);
         input_bytes.extend(a2_bytes);
 
         let b1 = G1::rand(&mut rng);
         let b2 = G2::rand(&mut rng);
-        let b1_bytes = encode_g1(b1.into_affine());
-        let b2_bytes = encode_g2(b2.into_affine());
+        let b1_bytes = encode_g1(b1);
+        let b2_bytes = encode_g2(b2);
         input_bytes.extend(b1_bytes);
         input_bytes.extend(b2_bytes);
 
         let c1: G1 = rand_g1_point_not_on_correct_subgroup();
         let c2 = G2::rand(&mut rng);
-        let c1_bytes = encode_g1(c1.into_affine());
-        let c2_bytes = encode_g2(c2.into_affine());
+        let c1_bytes = encode_g1(c1);
+        let c2_bytes = encode_g2(c2);
         input_bytes.extend(c1_bytes);
         input_bytes.extend(c2_bytes);
 
@@ -997,22 +999,22 @@ fn gen_fail_pairing() {
 
         let a1 = G1::rand(&mut rng);
         let a2 = G2::rand(&mut rng);
-        let a1_bytes = encode_g1(a1.into_affine());
-        let a2_bytes = encode_g2(a2.into_affine());
+        let a1_bytes = encode_g1(a1);
+        let a2_bytes = encode_g2(a2);
         input_bytes.extend(a1_bytes);
         input_bytes.extend(a2_bytes);
 
         let b1 = G1::rand(&mut rng);
         let b2 = G2::rand(&mut rng);
-        let b1_bytes = encode_g1(b1.into_affine());
-        let b2_bytes = encode_g2(b2.into_affine());
+        let b1_bytes = encode_g1(b1);
+        let b2_bytes = encode_g2(b2);
         input_bytes.extend(b1_bytes);
         input_bytes.extend(b2_bytes);
 
         let c1 = G1::rand(&mut rng);
         let c2: G2 = rand_g2_point_not_on_correct_subgroup();
-        let c1_bytes = encode_g1(c1.into_affine());
-        let c2_bytes = encode_g2(c2.into_affine());
+        let c1_bytes = encode_g1(c1);
+        let c2_bytes = encode_g2(c2);
         input_bytes.extend(c1_bytes);
         input_bytes.extend(c2_bytes);
 
@@ -1028,24 +1030,24 @@ fn gen_fail_pairing() {
     write_vectors_fail(vectors, "Pairing_Fail");
 }
 
-// #[test]
-// fn generate_test_vectors() {
-//     gen_g1_add_vectors();
-//     gen_g1_mul_vectors();
-//     gen_g1_multiexp_vectors();
-//     gen_g2_add_vectors();
-//     gen_g2_mul_vectors();
-//     gen_g2_multiexp_vectors();
-//     gen_pairing_vectors();
-// }
+#[test]
+fn generate_test_vectors() {
+    gen_g1_add_vectors();
+    gen_g1_mul_vectors();
+    gen_g1_multiexp_vectors();
+    gen_g2_add_vectors();
+    gen_g2_mul_vectors();
+    gen_g2_multiexp_vectors();
+    gen_pairing_vectors();
+}
 
 #[test]
 fn generate_fail_test_vectors() {
-    // gen_fail_g1_add_vectors();
-    // gen_fail_g1_mul_vectors();
-    // gen_fail_g1_multiexp_vectors();
-    // gen_fail_g2_add_vectors();
-    // gen_fail_g2_mul_vectors();
-    // gen_fail_g2_multiexp_vectors();
+    gen_fail_g1_add_vectors();
+    gen_fail_g1_mul_vectors();
+    gen_fail_g1_multiexp_vectors();
+    gen_fail_g2_add_vectors();
+    gen_fail_g2_mul_vectors();
+    gen_fail_g2_multiexp_vectors();
     gen_fail_pairing();
 }
