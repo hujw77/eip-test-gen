@@ -1,4 +1,4 @@
-use ark_bls12_377::{Fq, Fr, G1Affine, G1Projective as G1, G2Affine, G2Projective as G2};
+use ark_bls12_377::{Fq, Fq2, Fr, G1Affine, G1Projective as G1, G2Affine, G2Projective as G2};
 use ark_ec::{CurveGroup, Group};
 use ark_ff::PrimeField;
 use ark_std::ops::{Mul, Neg};
@@ -101,6 +101,14 @@ fn rand_g1_point_not_on_curve() -> G1 {
     let x = Fq::rand(&mut rng);
     let y = Fq::rand(&mut rng);
     let p = G1Affine::new_unchecked(x, y);
+    assert!(!p.is_on_curve());
+    p.into()
+}
+fn rand_g2_point_not_on_curve() -> G2 {
+    let mut rng = test_rng();
+    let x = Fq2::rand(&mut rng);
+    let y = Fq2::rand(&mut rng);
+    let p = G2Affine::new_unchecked(x, y);
     assert!(!p.is_on_curve());
     p.into()
 }
@@ -621,6 +629,59 @@ fn gen_fail_g1_multiexp_vectors() {
     write_vectors_fail(vectors, "G1MultiExp_Fail");
 }
 
+fn gen_fail_g2_add_vectors() {
+    let mut rng = test_rng();
+    let input_len = 8 * WORD_SIZE;
+    let pad_zeros: Vec<u8> = vec![0u8; WORD_SIZE - FE_SIZE];
+    let mut vectors: Vec<VectorFail> = gen_fail_vectors(input_len);
+
+    // large modulus
+    {
+        let a = G2::rand(&mut rng);
+        let mut input_bytes: Vec<u8> = vec![];
+        let a_bytes = encode_g2(a.into_affine());
+        input_bytes.extend(a_bytes);
+
+        // x0
+        input_bytes.extend(pad_zeros.clone());
+        input_bytes.extend(number_larger_than_modulus());
+        // x1, y0, y1
+        input_bytes.extend(vec![0u8; WORD_SIZE]);
+        input_bytes.extend(vec![0u8; WORD_SIZE]);
+        input_bytes.extend(vec![0u8; WORD_SIZE]);
+
+        let input: String = hex::encode(input_bytes.clone());
+        let vector = VectorFail {
+            input,
+            expected_error: String::from("invalid Fq"),
+            name: format!("large_field_element"),
+        };
+        vectors.push(vector);
+    }
+
+    // not on curve
+    {
+        let a = G2::rand(&mut rng);
+        let b: G2 = rand_g2_point_not_on_curve();
+
+        let a_bytes = encode_g2(a.into_affine());
+        let e_bytes = encode_g2(b.into_affine());
+
+        let mut input_bytes: Vec<u8> = vec![];
+        input_bytes.extend(a_bytes);
+        input_bytes.extend(e_bytes);
+
+        let input: String = hex::encode(input_bytes.clone());
+        let vector = VectorFail {
+            input,
+            expected_error: String::from("point is not on curve"),
+            name: format!("point_not_on_curve"),
+        };
+        vectors.push(vector);
+    }
+    write_vectors_fail(vectors, "G2Add_Fail");
+}
+
 // #[test]
 // fn generate_test_vectors() {
 //     gen_g1_add_vectors();
@@ -636,8 +697,8 @@ fn gen_fail_g1_multiexp_vectors() {
 fn generate_fail_test_vectors() {
     // gen_fail_g1_add_vectors();
     // gen_fail_g1_mul_vectors();
-    gen_fail_g1_multiexp_vectors();
-    // gen_fail_g2_add_vectors();
+    // gen_fail_g1_multiexp_vectors();
+    gen_fail_g2_add_vectors();
     // gen_fail_g2_mul_vectors();
     // gen_fail_g2_multiexp_vectors();
     // gen_fail_pairing();
