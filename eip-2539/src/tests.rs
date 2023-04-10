@@ -78,6 +78,19 @@ fn encode_g1(g1: G1Affine) -> [u8; 128] {
     result
 }
 
+fn encode_g2(g2: G2Affine) -> [u8; 256] {
+    let mut result = [0u8; 256];
+    let x0_bytes = encode_fq(g2.x.c0);
+    result[0..64].copy_from_slice(&x0_bytes[..]);
+    let x1_bytes = encode_fq(g2.x.c1);
+    result[64..128].copy_from_slice(&x1_bytes[..]);
+    let y0_bytes = encode_fq(g2.y.c0);
+    result[128..192].copy_from_slice(&y0_bytes[..]);
+    let y1_bytes = encode_fq(g2.y.c1);
+    result[192..256].copy_from_slice(&y1_bytes[..]);
+    result
+}
+
 fn gen_g1_add_vectors() {
     let mut rng = test_rng();
     let mut vectors: Vec<VectorSuccess> = vec![];
@@ -165,39 +178,67 @@ fn gen_g1_multiexp_vectors() {
     write_vectors(vectors, "G1MultiExp");
 }
 
-// fn gen_g2_add_vectors() {
-//     let mut rng = test_rng();
-//     let mut vectors: Vec<VectorSuccess> = vec![];
-//     for i in 0..NUM_TESTS {
-//         let mut input_bytes: Vec<u8> = vec![];
-//         let mut a: G2Projective = rng.gen();
-//         let b: G2Projective = rng.gen();
-//         let a_bytes: Vec<u8> = encode_g2(a);
-//         let b_bytes: Vec<u8> = encode_g2(b);
-//         input_bytes.extend(a_bytes);
-//         input_bytes.extend(b_bytes);
-//         let input: String = hex::encode(input_bytes.clone());
+fn gen_g2_add_vectors() {
+    let mut rng = test_rng();
+    let mut vectors: Vec<VectorSuccess> = vec![];
+    for i in 0..NUM_TESTS {
+        let mut input_bytes: Vec<u8> = vec![];
+        let a = G2::rand(&mut rng).into_affine();
+        let b = G2::rand(&mut rng).into_affine();
+        let a_bytes: Vec<u8> = encode_g2(a).to_vec();
+        let b_bytes: Vec<u8> = encode_g2(b).to_vec();
+        input_bytes.extend(a_bytes);
+        input_bytes.extend(b_bytes);
+        let input: String = hex::encode(input_bytes.clone());
 
-//         a.add_assign(b);
-//         let result_bytes: Vec<u8> = encode_g2(a);
-//         let result: String = hex::encode(result_bytes);
-//         let vector = VectorSuccess {
-//             input,
-//             expected: result,
-//             name: format!("{}_{}", "g2_add", i + 1),
-//         };
-//         vectors.push(vector);
-//     }
-//     write_vectors(vectors, "_g2_add");
-// }
+        let r = a + b;
+        let result_bytes: Vec<u8> = encode_g2(r.into_affine()).to_vec();
+        let result: String = hex::encode(result_bytes);
+        let vector = VectorSuccess {
+            input,
+            expected: result,
+            name: format!("{}_{}", "g2_add", i + 1),
+        };
+        vectors.push(vector);
+    }
+    write_vectors(vectors, "G2Add");
+}
+
+fn gen_g2_mul_vectors() {
+    let mut rng = test_rng();
+    let mut vectors: Vec<VectorSuccess> = vec![];
+    for i in 0..NUM_TESTS {
+        let mut input_bytes: Vec<u8> = vec![];
+
+        let a = G2::rand(&mut rng).into_affine();
+        let e = Fr::rand(&mut rng);
+        let a_bytes = encode_g2(a);
+        let e_bytes = encode_fr(e);
+
+        input_bytes.extend(a_bytes);
+        input_bytes.extend(e_bytes);
+        let input: String = hex::encode(input_bytes.clone());
+
+        let r = a.mul(e);
+        let result_bytes: Vec<u8> = encode_g2(r.into_affine()).to_vec();
+        let result: String = hex::encode(result_bytes);
+        let vector = VectorSuccess {
+            input,
+            expected: result,
+            name: format!("{}_{}", "g1_mul", i + 1),
+        };
+        vectors.push(vector);
+    }
+    write_vectors(vectors, "G2Mul");
+}
 
 #[test]
 fn generate_test_vectors() {
-    gen_g1_add_vectors();
-    gen_g1_mul_vectors();
-    gen_g1_multiexp_vectors();
+    // gen_g1_add_vectors();
+    // gen_g1_mul_vectors();
+    // gen_g1_multiexp_vectors();
     // gen_g2_add_vectors();
-    // gen_g2_mul_vectors();
+    gen_g2_mul_vectors();
     // gen_g2_multiexp_vectors();
     // gen_pairing_vectors();
 }
