@@ -17,6 +17,7 @@ const SCALAR_SIZE: usize = 32;
 const WORD_SIZE: usize = 64;
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 struct VectorSuccess {
     input: String,
     expected: String,
@@ -24,6 +25,7 @@ struct VectorSuccess {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 struct VectorFail {
     input: String,
     expected_error: String,
@@ -95,7 +97,7 @@ fn gen_fail_vectors(input_len: usize) -> Vec<VectorFail> {
 
 fn number_larger_than_modulus() -> Vec<u8> {
     hex::decode("01ae3a4617c510eac63b05c06ca1493b1a22d9f300f5138f1ef3622fba094800170b5d44300000008508c00000000002")
-        .expect("must decode")
+		.expect("must decode")
 }
 
 fn rand_g1_point_not_on_curve() -> G1 {
