@@ -384,8 +384,8 @@ fn gen_pairing_vectors() {
     let mut positive_result_bytes: Vec<u8> = vec![0u8; 32];
     positive_result_bytes[31] = 1u8;
     let negative_result_bytes: Vec<u8> = vec![0u8; 32];
-    let g1_inf_encoded: Vec<u8> = vec![0u8; 128];
-    let g2_inf_encoded: Vec<u8> = vec![0u8; 256];
+    let g1_inf_encoded: Vec<u8> = vec![0u8; 192];
+    let g2_inf_encoded: Vec<u8> = vec![0u8; 192];
 
     let g1 = G1::generator();
     let g2 = G2::generator();
