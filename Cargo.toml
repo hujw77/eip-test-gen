@@ -1,6 +1,7 @@
 [workspace]
 members = [
 	"eip-2539",
+	"eip-3026",
 ]
 
 [workspace.package]
