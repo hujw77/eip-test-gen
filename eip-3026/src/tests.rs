@@ -16,6 +16,7 @@ const FE_SIZE: usize = 96;
 const SCALAR_SIZE: usize = 64;
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 struct VectorSuccess {
     input: String,
     expected: String,
@@ -23,6 +24,7 @@ struct VectorSuccess {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 struct VectorFail {
     input: String,
     expected_error: String,
