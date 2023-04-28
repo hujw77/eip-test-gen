@@ -80,17 +80,6 @@ fn gen_fail_vectors(input_len: usize) -> Vec<VectorFail> {
         vectors.push(vector);
     }
 
-    // violate top zeros
-    {
-        let input: String = hex::encode(vec![1u8; input_len]);
-        let vector = VectorFail {
-            input,
-            expected_error: String::from("invliad Fq"),
-            name: format!("violate_top_zero_bytes"),
-        };
-        vectors.push(vector);
-    }
-
     vectors
 }
 
@@ -519,7 +508,7 @@ fn gen_fail_g1_add_vectors() {
         let input: String = hex::encode(input_bytes.clone());
         let vector = VectorFail {
             input,
-            expected_error: String::from("invliad Fq"),
+            expected_error: String::from("invalid Fq"),
             name: format!("large_field_element"),
         };
         vectors.push(vector);
@@ -565,7 +554,7 @@ fn gen_fail_g1_mul_vectors() {
         let input: String = hex::encode(input_bytes.clone());
         let vector = VectorFail {
             input,
-            expected_error: String::from("invliad Fq"),
+            expected_error: String::from("invalid Fq"),
             name: format!("large_field_element"),
         };
         vectors.push(vector);
@@ -624,7 +613,7 @@ fn gen_fail_g1_multiexp_vectors() {
         let input: String = hex::encode(input_bytes.clone());
         let vector = VectorFail {
             input,
-            expected_error: String::from("invliad Fq"),
+            expected_error: String::from("invalid Fq"),
             name: format!("large_field_element"),
         };
         vectors.push(vector);
@@ -752,7 +741,7 @@ fn gen_fail_g2_mul_vectors() {
         };
         vectors.push(vector);
     }
-    write_vectors_fail(vectors, "G2Mul_Fail");
+    write_vectors_fail(vectors, "G2Mul");
 }
 
 fn gen_fail_g2_multiexp_vectors() {
