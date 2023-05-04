@@ -34,14 +34,14 @@ struct VectorFail {
 fn write_vectors(vectors: Vec<VectorSuccess>, name: &str) {
 	let serialized: String = serde_json::to_string(&vectors).unwrap();
 	let mut file = File::create(PREFIX.to_string() + name + ".json").expect("must create the file");
-	file.write(serialized.as_bytes()).expect("must write vectors");
+	file.write_all(serialized.as_bytes()).expect("must write vectors");
 }
 
 fn write_vectors_fail(vectors: Vec<VectorFail>, name: &str) {
 	let serialized: String = serde_json::to_string(&vectors).unwrap();
 	let mut file =
 		File::create(FAIL_PREFIX.to_string() + name + ".json").expect("must create the file");
-	file.write(serialized.as_bytes()).expect("must write vectors");
+	file.write_all(serialized.as_bytes()).expect("must write vectors");
 }
 
 fn gen_fail_vectors(input_len: usize) -> Vec<VectorFail> {
@@ -181,24 +181,18 @@ fn encode_fr(r: Fr) -> [u8; 32] {
 fn encode_g1(g1: G1) -> [u8; 128] {
 	let g = g1.into_affine();
 	let mut result = [0u8; 128];
-	let x_bytes = encode_fq(g.x);
-	result[0..64].copy_from_slice(&x_bytes[..]);
-	let y_bytes = encode_fq(g.y);
-	result[64..128].copy_from_slice(&y_bytes[..]);
+	result[0..64].copy_from_slice(&encode_fq(g.x));
+	result[64..128].copy_from_slice(&encode_fq(g.y));
 	result
 }
 
 fn encode_g2(g2: G2) -> [u8; 256] {
 	let g = g2.into_affine();
 	let mut result = [0u8; 256];
-	let x0_bytes = encode_fq(g.x.c0);
-	result[0..64].copy_from_slice(&x0_bytes[..]);
-	let x1_bytes = encode_fq(g.x.c1);
-	result[64..128].copy_from_slice(&x1_bytes[..]);
-	let y0_bytes = encode_fq(g.y.c0);
-	result[128..192].copy_from_slice(&y0_bytes[..]);
-	let y1_bytes = encode_fq(g.y.c1);
-	result[192..256].copy_from_slice(&y1_bytes[..]);
+	result[0..64].copy_from_slice(&encode_fq(g.x.c0));
+	result[64..128].copy_from_slice(&encode_fq(g.x.c1));
+	result[128..192].copy_from_slice(&encode_fq(g.y.c0));
+	result[192..256].copy_from_slice(&encode_fq(g.y.c1));
 	result
 }
 
@@ -375,8 +369,8 @@ fn gen_pairing_vectors() {
 		{
 			let mut input_bytes: Vec<u8> = vec![];
 
-			let mut bytes_a1 = g1_inf_encoded.clone();
-			let mut bytes_a2 = encode_g2(g2.clone()).to_vec();
+			let mut bytes_a1 = g1_inf_encoded;
+			let mut bytes_a2 = encode_g2(g2).to_vec();
 			input_bytes.extend(bytes_a1);
 			input_bytes.extend(bytes_a2);
 
@@ -390,8 +384,8 @@ fn gen_pairing_vectors() {
 			vectors.push(vector);
 
 			input_bytes.clear();
-			bytes_a1 = encode_g1(g1.clone()).to_vec();
-			bytes_a2 = g2_inf_encoded.to_vec().clone();
+			bytes_a1 = encode_g1(g1).to_vec();
+			bytes_a2 = g2_inf_encoded.to_vec();
 			input_bytes.extend(bytes_a1);
 			input_bytes.extend(bytes_a2);
 
@@ -493,7 +487,7 @@ fn gen_fail_g1_add_vectors() {
 		let mut input_bytes: Vec<u8> = vec![];
 		let a_bytes = encode_g1(a);
 		input_bytes.extend(a_bytes);
-		input_bytes.extend(pad_zeros.clone());
+		input_bytes.extend(pad_zeros);
 		input_bytes.extend(number_larger_than_modulus());
 		input_bytes.extend(vec![0u8; WORD_SIZE]);
 
@@ -511,8 +505,8 @@ fn gen_fail_g1_add_vectors() {
 		let a = G1::rand(&mut rng);
 		let b = rand_g1_point_not_on_curve();
 
-		let a_bytes = encode_g1(a.into());
-		let e_bytes = encode_g1(b.into());
+		let a_bytes = encode_g1(a);
+		let e_bytes = encode_g1(b);
 
 		let mut input_bytes: Vec<u8> = vec![];
 		input_bytes.extend(a_bytes);
@@ -538,7 +532,7 @@ fn gen_fail_g1_mul_vectors() {
 	{
 		let mut input_bytes: Vec<u8> = vec![];
 		// x
-		input_bytes.extend(pad_zeros.clone());
+		input_bytes.extend(pad_zeros);
 		input_bytes.extend(number_larger_than_modulus());
 		// y
 		input_bytes.extend(vec![0u8; WORD_SIZE]);
@@ -599,7 +593,8 @@ fn gen_fail_g1_multiexp_vectors() {
 		input_bytes.extend(b_bytes);
 		input_bytes.extend(e2_bytes);
 
-		input_bytes.extend(pad_zeros.clone());
+		// x
+		input_bytes.extend(pad_zeros);
 		input_bytes.extend(number_larger_than_modulus());
 		// y
 		input_bytes.extend(vec![0u8; WORD_SIZE]);
@@ -666,7 +661,7 @@ fn gen_fail_g2_add_vectors() {
 		input_bytes.extend(a_bytes);
 
 		// x0
-		input_bytes.extend(pad_zeros.clone());
+		input_bytes.extend(pad_zeros);
 		input_bytes.extend(number_larger_than_modulus());
 		// x1, y0, y1
 		input_bytes.extend(vec![0u8; WORD_SIZE]);
@@ -705,7 +700,7 @@ fn gen_fail_g2_add_vectors() {
 	write_vectors_fail(vectors, "G2Add");
 }
 fn gen_fail_g2_mul_vectors() {
-	let input_len = 2 * 2 * WORD_SIZE + SCALAR_SIZE;
+	let input_len = 4 * WORD_SIZE + SCALAR_SIZE;
 	let pad_zeros: Vec<u8> = vec![0u8; WORD_SIZE - FE_SIZE];
 	let mut vectors: Vec<VectorFail> = gen_fail_vectors(input_len);
 
@@ -714,7 +709,7 @@ fn gen_fail_g2_mul_vectors() {
 		let mut input_bytes: Vec<u8> = vec![];
 
 		// x0
-		input_bytes.extend(pad_zeros.clone());
+		input_bytes.extend(pad_zeros);
 		input_bytes.extend(number_larger_than_modulus());
 		// x1, y0, y1
 		input_bytes.extend(vec![0u8; WORD_SIZE]);
@@ -754,7 +749,7 @@ fn gen_fail_g2_mul_vectors() {
 
 fn gen_fail_g2_multiexp_vectors() {
 	let mut rng = test_rng();
-	let input_len = 3 * (2 * 2 * WORD_SIZE + SCALAR_SIZE);
+	let input_len = 3 * (4 * WORD_SIZE + SCALAR_SIZE);
 	let pad_zeros: Vec<u8> = vec![0u8; WORD_SIZE - FE_SIZE];
 	let mut vectors: Vec<VectorFail> = gen_fail_vectors(input_len);
 
@@ -778,7 +773,7 @@ fn gen_fail_g2_multiexp_vectors() {
 		input_bytes.extend(e2_bytes);
 
 		// x0
-		input_bytes.extend(pad_zeros.clone());
+		input_bytes.extend(pad_zeros);
 		input_bytes.extend(number_larger_than_modulus());
 		// x1, y0, y1
 		input_bytes.extend(vec![0u8; WORD_SIZE]);
@@ -834,7 +829,7 @@ fn gen_fail_g2_multiexp_vectors() {
 }
 fn gen_fail_pairing() {
 	let mut rng = test_rng();
-	let input_len = 3 * 4 * WORD_SIZE;
+	let input_len = 3 * 6 * WORD_SIZE;
 	let mut vectors: Vec<VectorFail> = gen_fail_vectors(input_len);
 	let pad_zeros: Vec<u8> = vec![0u8; WORD_SIZE - FE_SIZE];
 
@@ -858,7 +853,7 @@ fn gen_fail_pairing() {
 		input_bytes.extend(b2_bytes);
 
 		// c1x
-		input_bytes.extend(pad_zeros.clone());
+		input_bytes.extend(pad_zeros);
 		input_bytes.extend(number_larger_than_modulus());
 		// c1y
 		input_bytes.extend(vec![0u8; WORD_SIZE]);
