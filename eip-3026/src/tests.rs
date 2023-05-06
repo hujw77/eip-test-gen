@@ -5,7 +5,7 @@ use ark_std::{
 	ops::{Mul, Neg},
 	test_rng, One, UniformRand, Zero,
 };
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::{fs::File, io::prelude::*};
 
 const NUM_TESTS: usize = 100;

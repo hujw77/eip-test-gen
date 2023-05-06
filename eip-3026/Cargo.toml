@@ -14,3 +14,17 @@ ark-std     = { version = "0.4.0", default-features = false }
 hex         = "0.4.3"
 serde       = { version = "1.0.159", features = ["derive"] }
 serde_json  = "1.0.95"
+
+ark-serialize               = { version = "0.4.0", default-features = false }
+ark-algebra-bench-templates = { version = "0.4.0", default-features = false }
+criterion = "0.4"
+
+[[bench]]
+name = "bw6_761"
+path = "benches/bw6_761.rs"
+harness = false
+
+[[bench]]
+name = "eip_3026"
+path = "benches/eip_3026.rs"
+harness = false
