@@ -181,31 +181,31 @@ mod pairing {
 			.collect::<Vec<_>>();
 		let mut i = 0;
 		let mut pairing = c.benchmark_group(format!("Pairing for {}", stringify!(BW6_761)));
-		pairing.bench_function(&format!("G1 Preparation for {}", stringify!(BW6_761)), |b| {
+		pairing.bench_function(stringify!(G1 Preparation), |b| {
 			b.iter(|| {
 				i = (i + 1) % SAMPLES;
 				G1Prepared::from(g1s[i].clone())
 			})
 		});
-		pairing.bench_function(&format!("G2 Preparation for {}", stringify!(BW6_761)), |b| {
+		pairing.bench_function(stringify!(G2 Preparation), |b| {
 			b.iter(|| {
 				i = (i + 1) % SAMPLES;
 				G2Prepared::from(g2s[i])
 			})
 		});
-		pairing.bench_function(&format!("Miller Loop for {}", stringify!(BW6_761)), |b| {
+		pairing.bench_function(stringify!(Miller Loop), |b| {
 			b.iter(|| {
 				i = (i + 1) % SAMPLES;
 				BW6_761::multi_miller_loop([prepared_1[i].clone()], [prepared_2[i].clone()])
 			})
 		});
-		pairing.bench_function(&format!("Final Exponentiation for {}", stringify!(BW6_761)), |b| {
+		pairing.bench_function(stringify!(Final Exponentiation), |b| {
 			b.iter(|| {
 				i = (i + 1) % SAMPLES;
 				BW6_761::final_exponentiation(miller_loop_outputs[i])
 			})
 		});
-		pairing.bench_function(&format!("Full Pairing for {}", stringify!(BW6_761)), |b| {
+		pairing.bench_function(stringify!(Full Pairing), |b| {
 			b.iter(|| {
 				i = (i + 1) % SAMPLES;
 				BW6_761::multi_pairing([g1s[i]], [g2s[i]])
