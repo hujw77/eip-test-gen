@@ -8,12 +8,6 @@ use ark_std::UniformRand;
 mod g1 {
 	use super::*;
 
-	fn rand(c: &mut Criterion) {
-		let name = format!("{}::{}", stringify!(BW6_761), stringify!(G1));
-		let mut rng = ark_std::test_rng();
-		c.bench_function(&format!("Sample {name} elements"), |b| b.iter(|| G1::rand(&mut rng)));
-	}
-
 	fn arithmetic(c: &mut Criterion) {
 		let name = format!("{}::{}", stringify!(BW6_761), stringify!(G1));
 
@@ -71,7 +65,6 @@ mod g1 {
 
 	pub fn benches() {
 		let mut criterion: Criterion<_> = (Criterion::default()).configure_from_args();
-		rand(&mut criterion);
 		arithmetic(&mut criterion);
 		let _ = (1..129).map(|i| msm(i, &mut criterion)).collect::<Vec<_>>();
 	}
@@ -79,12 +72,6 @@ mod g1 {
 
 mod g2 {
 	use super::*;
-
-	fn rand(c: &mut Criterion) {
-		let name = format!("{}::{}", stringify!(BW6_761), stringify!(G2));
-		let mut rng = ark_std::test_rng();
-		c.bench_function(&format!("Sample {name} elements"), |b| b.iter(|| G2::rand(&mut rng)));
-	}
 
 	fn arithmetic(c: &mut Criterion) {
 		let name = format!("{}::{}", stringify!(BW6_761), stringify!(G2));
@@ -143,7 +130,6 @@ mod g2 {
 
 	pub fn benches() {
 		let mut criterion: Criterion<_> = (Criterion::default()).configure_from_args();
-		rand(&mut criterion);
 		arithmetic(&mut criterion);
 		let _ = (1..129).map(|i| msm(i, &mut criterion)).collect::<Vec<_>>();
 	}
@@ -181,18 +167,6 @@ mod pairing {
 			.collect::<Vec<_>>();
 		let mut i = 0;
 		let mut pairing = c.benchmark_group(format!("Pairing for {}", stringify!(BW6_761)));
-		pairing.bench_function(stringify!(G1 Preparation), |b| {
-			b.iter(|| {
-				i = (i + 1) % SAMPLES;
-				G1Prepared::from(g1s[i].clone())
-			})
-		});
-		pairing.bench_function(stringify!(G2 Preparation), |b| {
-			b.iter(|| {
-				i = (i + 1) % SAMPLES;
-				G2Prepared::from(g2s[i])
-			})
-		});
 		pairing.bench_function(stringify!(Miller Loop), |b| {
 			b.iter(|| {
 				i = (i + 1) % SAMPLES;
