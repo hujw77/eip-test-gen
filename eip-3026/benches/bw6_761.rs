@@ -27,14 +27,6 @@ mod g1 {
 				group_elements_left[i] + group_elements_right[i]
 			})
 		});
-		arithmetic.bench_function("Double", |b| {
-			let mut i = 0;
-			b.iter(|| {
-				i = (i + 1) % SAMPLES;
-				group_elements_left[i].double()
-			})
-		});
-
 		arithmetic.bench_function("Scalar Multiplication(worst-case)", |b| {
 			let mut i = 0;
 			b.iter(|| {
@@ -92,14 +84,6 @@ mod g2 {
 				group_elements_left[i] + group_elements_right[i]
 			})
 		});
-		arithmetic.bench_function("Double", |b| {
-			let mut i = 0;
-			b.iter(|| {
-				i = (i + 1) % SAMPLES;
-				group_elements_left[i].double()
-			})
-		});
-
 		arithmetic.bench_function("Scalar Multiplication(worst-case)", |b| {
 			let mut i = 0;
 			b.iter(|| {
