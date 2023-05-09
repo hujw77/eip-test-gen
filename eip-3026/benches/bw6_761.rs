@@ -20,14 +20,16 @@ mod g1 {
 		let scalars = (0..SAMPLES)
 			.map(|_| Fr::from_be_bytes_mod_order(&worst_case_scalar))
 			.collect::<Vec<_>>();
-		arithmetic.bench_function("Addition", |b| {
+		let id = BenchmarkId::new("Arithmetic", "Addition");
+		arithmetic.bench_function(id, |b| {
 			let mut i = 0;
 			b.iter(|| {
 				i = (i + 1) % SAMPLES;
 				group_elements_left[i] + group_elements_right[i]
 			})
 		});
-		arithmetic.bench_function("Scalar Multiplication(worst-case)", |b| {
+		let id = BenchmarkId::new("Arithmetic", "Scalar Multiplication(worst-case)");
+		arithmetic.bench_function(id, |b| {
 			let mut i = 0;
 			b.iter(|| {
 				i = (i + 1) % SAMPLES;
@@ -49,7 +51,8 @@ mod g1 {
 			let scalars: Vec<_> = (0..sample)
 				.map(|_| Fr::from_be_bytes_mod_order(&worst_case_scalar).into_bigint())
 				.collect();
-			group.bench_function(&format!("MSM-{sample}"), |b| {
+			let id = BenchmarkId::new("MSM", sample);
+			group.bench_function(id, |b| {
 				b.iter(|| {
 					let result: G1 = VariableBaseMSM::msm_bigint(&v, &scalars);
 					result
@@ -80,14 +83,16 @@ mod g2 {
 		let scalars = (0..SAMPLES)
 			.map(|_| Fr::from_be_bytes_mod_order(&worst_case_scalar))
 			.collect::<Vec<_>>();
-		arithmetic.bench_function("Addition", |b| {
+		let id = BenchmarkId::new("Arithmetic", "Addition");
+		arithmetic.bench_function(id, |b| {
 			let mut i = 0;
 			b.iter(|| {
 				i = (i + 1) % SAMPLES;
 				group_elements_left[i] + group_elements_right[i]
 			})
 		});
-		arithmetic.bench_function("Scalar Multiplication(worst-case)", |b| {
+		let id = BenchmarkId::new("Arithmetic", "Scalar Multiplication(worst-case)");
+		arithmetic.bench_function(id, |b| {
 			let mut i = 0;
 			b.iter(|| {
 				i = (i + 1) % SAMPLES;
@@ -109,7 +114,8 @@ mod g2 {
 			let scalars: Vec<_> = (0..sample)
 				.map(|_| Fr::from_be_bytes_mod_order(&worst_case_scalar).into_bigint())
 				.collect();
-			group.bench_function(&format!("MSM-{sample}"), |b| {
+			let id = BenchmarkId::new("MSM", sample);
+			group.bench_function(id, |b| {
 				b.iter(|| {
 					let result: G2 = VariableBaseMSM::msm_bigint(&v, &scalars);
 					result
@@ -157,19 +163,22 @@ mod pairing {
 			.collect::<Vec<_>>();
 		let mut i = 0;
 		let mut pairing = c.benchmark_group(format!("Pairing for {}", stringify!(BW6_761)));
-		pairing.bench_function(stringify!(Miller Loop), |b| {
+		let id = BenchmarkId::new("Pairing", "Miller Loop");
+		pairing.bench_function(id, |b| {
 			b.iter(|| {
 				i = (i + 1) % SAMPLES;
 				BW6_761::multi_miller_loop([prepared_1[i].clone()], [prepared_2[i].clone()])
 			})
 		});
-		pairing.bench_function(stringify!(Final Exponentiation), |b| {
+		let id = BenchmarkId::new("Pairing", "Final Exponentiation");
+		pairing.bench_function(id, |b| {
 			b.iter(|| {
 				i = (i + 1) % SAMPLES;
 				BW6_761::final_exponentiation(miller_loop_outputs[i])
 			})
 		});
-		pairing.bench_function(stringify!(Full Pairing), |b| {
+		let id = BenchmarkId::new("Pairing", "Full Pairing");
+		pairing.bench_function(id, |b| {
 			b.iter(|| {
 				i = (i + 1) % SAMPLES;
 				BW6_761::multi_pairing([g1s[i]], [g2s[i]])
