@@ -66,7 +66,7 @@ mod g1 {
 	pub fn benches() {
 		let mut criterion: Criterion<_> = (Criterion::default()).configure_from_args();
 		arithmetic(&mut criterion);
-		// msm(128, &mut criterion);
+		msm(128, &mut criterion);
 	}
 }
 
@@ -131,7 +131,7 @@ mod g2 {
 	pub fn benches() {
 		let mut criterion: Criterion<_> = (Criterion::default()).configure_from_args();
 		arithmetic(&mut criterion);
-		// msm(128, &mut criterion);
+		msm(128, &mut criterion);
 	}
 }
 
@@ -163,6 +163,6 @@ mod pairing {
 fn main() {
 	g1::benches();
 	g2::benches();
-	// pairing::benches();
+	pairing::benches();
 	Criterion::default().configure_from_args().final_summary();
 }
