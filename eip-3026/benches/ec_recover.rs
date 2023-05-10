@@ -11,6 +11,7 @@ fn bench_ecrevocer(c: &mut Criterion) {
 		.collect::<Vec<_>>();
 
 	let mut group = c.benchmark_group("ECRECOVER");
+	group.sample_size(1000);
 	group.bench_function(&format!("ECRECOVER for {SAMPLES} samples"), |b| {
 		let mut i = 0;
 		b.iter(|| {

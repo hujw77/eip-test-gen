@@ -10,6 +10,7 @@ fn bench_bn_pairing(c: &mut Criterion) {
 	let g2s = (0..SAMPLES).map(|_| G2::random(&mut rng)).collect::<Vec<_>>();
 
 	let mut group = c.benchmark_group("Bn");
+	group.sample_size(1000);
 	group.bench_function(&format!("Pairing for {SAMPLES} samples"), |b| {
 		let mut i = 0;
 		b.iter(|| {

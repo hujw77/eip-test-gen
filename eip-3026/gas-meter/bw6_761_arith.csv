@@ -1,0 +1,6 @@
+"\"id\",\"time\",\"unit\""
+"\"Arithmetic for BW6_761::G1/Arithmetic/Addition\",3463.7452892624615,\"ns\""
+"\"Arithmetic for BW6_761::G1/Arithmetic/Scalar Multiplication(worst-case)\",1249294.768400001,\"ns\""
+",,"
+"\"Arithmetic for BW6_761::G2/Arithmetic/Addition\",3463.285768434464,\"ns\""
+"\"Arithmetic for BW6_761::G2/Arithmetic/Scalar Multiplication(worst-case)\",1250918.0789999997,\"ns\""

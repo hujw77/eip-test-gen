@@ -21,6 +21,7 @@ mod g1 {
 			.map(|_| Fr::from_be_bytes_mod_order(&worst_case_scalar))
 			.collect::<Vec<_>>();
 		let id = BenchmarkId::new("Arithmetic", "Addition");
+		arithmetic.sample_size(1000);
 		arithmetic.bench_function(id, |b| {
 			let mut i = 0;
 			b.iter(|| {
@@ -52,6 +53,7 @@ mod g1 {
 				.map(|_| Fr::from_be_bytes_mod_order(&worst_case_scalar).into_bigint())
 				.collect();
 			let id = BenchmarkId::new("MSM", sample);
+			group.sample_size(1000);
 			group.bench_function(id, |b| {
 				b.iter(|| {
 					let result: G1 = VariableBaseMSM::msm_bigint(&v, &scalars);
@@ -64,7 +66,7 @@ mod g1 {
 	pub fn benches() {
 		let mut criterion: Criterion<_> = (Criterion::default()).configure_from_args();
 		arithmetic(&mut criterion);
-		msm(128, &mut criterion);
+		// msm(128, &mut criterion);
 	}
 }
 
@@ -84,6 +86,7 @@ mod g2 {
 			.map(|_| Fr::from_be_bytes_mod_order(&worst_case_scalar))
 			.collect::<Vec<_>>();
 		let id = BenchmarkId::new("Arithmetic", "Addition");
+		arithmetic.sample_size(1000);
 		arithmetic.bench_function(id, |b| {
 			let mut i = 0;
 			b.iter(|| {
@@ -115,6 +118,7 @@ mod g2 {
 				.map(|_| Fr::from_be_bytes_mod_order(&worst_case_scalar).into_bigint())
 				.collect();
 			let id = BenchmarkId::new("MSM", sample);
+			group.sample_size(1000);
 			group.bench_function(id, |b| {
 				b.iter(|| {
 					let result: G2 = VariableBaseMSM::msm_bigint(&v, &scalars);
@@ -127,7 +131,7 @@ mod g2 {
 	pub fn benches() {
 		let mut criterion: Criterion<_> = (Criterion::default()).configure_from_args();
 		arithmetic(&mut criterion);
-		msm(128, &mut criterion);
+		// msm(128, &mut criterion);
 	}
 }
 
@@ -135,55 +139,22 @@ mod pairing {
 	use super::*;
 
 	fn pairing(c: &mut Criterion) {
-		type G1Prepared = <BW6_761 as Pairing>::G1Prepared;
-		type G2Prepared = <BW6_761 as Pairing>::G2Prepared;
-
-		const SAMPLES: usize = 1000;
-
+		let pairs: [usize; 5] = [2, 4, 8, 12, 16];
 		let mut rng = ark_std::test_rng();
 
-		let g1s = (0..SAMPLES).map(|_| G1::rand(&mut rng)).collect::<Vec<_>>();
-		let g2s = (0..SAMPLES).map(|_| G2::rand(&mut rng)).collect::<Vec<_>>();
-		let g1s = G1::normalize_batch(&g1s);
-		let g2s = G2::normalize_batch(&g2s);
-		let (prepared_1, prepared_2): (Vec<G1Prepared>, Vec<G2Prepared>) = g1s
-			.iter()
-			.zip(&g2s)
-			.map(|(g1, g2)| {
-				let g1: G1Prepared = g1.into();
-				let g2: G2Prepared = g2.into();
-				(g1, g2)
-			})
-			.unzip();
-		let miller_loop_outputs = prepared_1
-			.iter()
-			.cloned()
-			.zip(prepared_2.iter().cloned())
-			.map(|(g1, g2)| BW6_761::multi_miller_loop([g1], [g2]))
-			.collect::<Vec<_>>();
-		let mut i = 0;
-		let mut pairing = c.benchmark_group(format!("Pairing for {}", stringify!(BW6_761)));
-		let id = BenchmarkId::new("Pairing", "Miller Loop");
-		pairing.bench_function(id, |b| {
-			b.iter(|| {
-				i = (i + 1) % SAMPLES;
-				BW6_761::multi_miller_loop([prepared_1[i].clone()], [prepared_2[i].clone()])
-			})
-		});
-		let id = BenchmarkId::new("Pairing", "Final Exponentiation");
-		pairing.bench_function(id, |b| {
-			b.iter(|| {
-				i = (i + 1) % SAMPLES;
-				BW6_761::final_exponentiation(miller_loop_outputs[i])
-			})
-		});
-		let id = BenchmarkId::new("Pairing", "Full Pairing");
-		pairing.bench_function(id, |b| {
-			b.iter(|| {
-				i = (i + 1) % SAMPLES;
-				BW6_761::multi_pairing([g1s[i]], [g2s[i]])
-			})
-		});
+		let mut group = c.benchmark_group(format!("Pairing for {}", stringify!(BW6_671)));
+		for num_pair in pairs.iter() {
+			let sample = *num_pair;
+			let g1s = (0..sample).map(|_| G1::rand(&mut rng)).collect::<Vec<_>>();
+			let g2s = (0..sample).map(|_| G2::rand(&mut rng)).collect::<Vec<_>>();
+			let g1s = G1::normalize_batch(&g1s);
+			let g2s = G2::normalize_batch(&g2s);
+			let id = BenchmarkId::new("Pairing", sample);
+			group.sample_size(1000);
+			group.bench_with_input(id, &(g1s, g2s), |b, (g1s, g2s)| {
+				b.iter(|| BW6_761::multi_pairing(black_box(g1s), black_box(g2s)))
+			});
+		}
 	}
 
 	criterion_group!(benches, pairing);
@@ -192,6 +163,6 @@ mod pairing {
 fn main() {
 	g1::benches();
 	g2::benches();
-	pairing::benches();
+	// pairing::benches();
 	Criterion::default().configure_from_args().final_summary();
 }
