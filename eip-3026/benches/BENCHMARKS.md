@@ -11,6 +11,16 @@
     - [Pairing for BW6_671](#pairing-for-bw6_671)
     - [ECRECOVER](#ecrecover)
 
+## Benchmark strategy
+Gas cost is derived by taking the average timing of the same operations over different implementations and assuming a constant `51 MGas/second`. Since the execution time is machine-specific, this constant is determined based on execution times of [ECRECOVER](https://github.com/hujw77/eip-test-gen/blob/main/eip-3026/benches/ec_recover.rs) and [BNPAIR](https://github.com/hujw77/eip-test-gen/blob/main/eip-3026/benches/bn_pairing.rs) precompiles on my machine and their proposed gas price (`63.8 MGas/s` for ECRECOVER and `37.8 MGas/s` for BNPAIR). Following are the proposed methods to time the precompile operations:
+
+- G1 addition: Average timing of 1000 random samples.
+- G1 multiplication: Average timing of 1000 samples of random worst-case of double-and-add algorithm (scalar of max bit length and max hamming weight and random base points in G1)
+- G2 addition: Average timing of 1000 random samples
+- G2 multiplication: Average timing of 1000 samples of radnom worst-case of double-and-add algorithm (scalar of max bit length and max hamming weight and random base points in G2)
+- G1 and G2 multiexponentiations: Expected to be performed by the Peppinger algorithm, with a table prepared for discount in case of `k <= 128` points in the multiexponentiation with a discount cup `max_discount` for `k > 128`. To avoid non-integer arithmetic call cost is calculated as `k * multiplication_cost * discount / multiplier` where `multiplier = 1000`, `k` is a number of (scalar, point) pairs for the call, `multiplication_cost` is a corresponding single multiplication call cost for G1/G2.
+- Pairing: Average timing of 1000 random samples (random points in G1 and G2) for different number of pairs with linear lifting.
+
 ## Benchmark Results
 
 ### Bn
